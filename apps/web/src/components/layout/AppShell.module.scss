@@ -1,0 +1,175 @@
+.shell {
+  min-height: 100vh;
+  padding-bottom: 5rem;
+  background: transparent;
+  color: #172026;
+}
+
+.sidebar {
+  display: none;
+}
+
+.mobileHeader {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid rgba(219, 226, 230, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem 1rem;
+  backdrop-filter: blur(12px);
+}
+
+.content {
+  width: 100%;
+  min-width: 0;
+  padding: 1rem 0.75rem;
+}
+
+.mobileNav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.125rem;
+  border-top: 1px solid #dbe2e6;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.5rem 0.25rem;
+  box-shadow: 0 14px 40px rgba(23, 32, 38, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.navItem {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.25rem;
+  color: #475569;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.navItem span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active {
+  background: #172026 !important;
+  color: #fff !important;
+}
+
+.brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brandIcon {
+  display: grid;
+  height: 2.75rem;
+  width: 2.75rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 0.5rem;
+  background: #0f766e;
+  color: #fff;
+}
+
+.brandCompact .brandIcon {
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.brandText {
+  min-width: 0;
+}
+
+.brandEyebrow {
+  overflow: hidden;
+  color: #0f766e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.brandName {
+  overflow: hidden;
+  font-size: 1.125rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brandCompact .brandName {
+  font-size: 1rem;
+}
+
+.desktopNav {
+  margin-top: 2.5rem;
+}
+
+.desktopNavItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.5rem;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-decoration: none;
+}
+
+.desktopNavItem + .desktopNavItem {
+  margin-top: 0.5rem;
+}
+
+.desktopNavItem:hover {
+  background: #f5f7f8;
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    display: flex;
+    padding-bottom: 0;
+  }
+
+  .sidebar {
+    display: block;
+    width: 18rem;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(219, 226, 230, 0.8);
+    background: rgba(255, 255, 255, 0.85);
+    padding: 1.75rem 1.5rem;
+    backdrop-filter: blur(12px);
+  }
+
+  .mobileHeader,
+  .mobileNav {
+    display: none;
+  }
+
+  .content {
+    flex: 1;
+    padding: 1.25rem 2rem;
+  }
+}

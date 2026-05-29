@@ -1,0 +1,32 @@
+.shell {
+  min-height: 100vh;
+}
+
+.metricCard {
+  position: relative;
+  overflow: hidden;
+}
+
+.metricCard::after {
+  content: '';
+  position: absolute;
+  inset: auto -24px -36px auto;
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.tableWrap {
+  scrollbar-width: thin;
+  scrollbar-color: #9aa8af transparent;
+}
+
+.tableWrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tableWrap::-webkit-scrollbar-thumb {
+  background: #9aa8af;
+  border-radius: 999px;
+}
