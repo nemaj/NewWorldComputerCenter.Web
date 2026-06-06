@@ -1,8 +1,8 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, ReactNode, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { CheckCircle2, CircleDollarSign, CreditCard, FileText, Gauge } from 'lucide-react';
+import { CheckCircle2, CircleDollarSign, CreditCard, FileText, Gauge, LucideIcon } from 'lucide-react';
 import { AppShell, PageHeader } from '@/components/layout';
 import { TablePagination, TableSearch, useSearchPagination } from '@/components/tables';
 import { currency, customerName, Customer, DASHBOARD_QUERY, Invoice, RECORD_PAYMENT } from '@/features/billing';
@@ -22,6 +22,13 @@ type DashboardData = {
 type CustomerInvoiceRow = {
   customer: DashboardData['customers'][number];
   invoice?: Invoice;
+};
+
+type DashboardMetric = {
+  icon: LucideIcon;
+  label: string;
+  value: ReactNode;
+  help: string;
 };
 
 export default function DashboardPage() {
@@ -55,6 +62,12 @@ export default function DashboardPage() {
     [invoice.billingMonth, invoice.amount, invoice.status, customerName(invoice.customer), invoice.plan.name]
       .some((value) => String(value).toLowerCase().includes(search))
   );
+  const metrics: DashboardMetric[] = [
+    { icon: CircleDollarSign, label: 'Paid revenue', value: currency(stats.totalRevenue), help: 'Recorded invoice payments' },
+    { icon: CheckCircle2, label: 'Paid invoices', value: stats.paidInvoices, help: 'Completed billing records' },
+    { icon: FileText, label: 'Unpaid invoices', value: stats.unpaidInvoices, help: 'Awaiting customer payment' },
+    { icon: Gauge, label: 'Active subscriptions', value: stats.activeSubscriptions, help: 'Plans currently billing' }
+  ];
 
   async function payInvoice(event: FormEvent<HTMLFormElement>, invoice: Invoice) {
     event.preventDefault();
@@ -89,17 +102,12 @@ export default function DashboardPage() {
       <PageHeader eyebrow="Billing operations" title="Dashboard" />
       {error ? <div className="mt-6 rounded-lg border border-coral/30 bg-white p-4 text-coral">API connection failed. Start the NestJS server and MongoDB, then refresh this dashboard.</div> : null}
       <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          [CircleDollarSign, 'Paid revenue', currency(stats.totalRevenue), 'Recorded invoice payments'],
-          [CheckCircle2, 'Paid invoices', stats.paidInvoices, 'Completed billing records'],
-          [FileText, 'Unpaid invoices', stats.unpaidInvoices, 'Awaiting customer payment'],
-          [Gauge, 'Active subscriptions', stats.activeSubscriptions, 'Plans currently billing']
-        ].map(([Icon, label, value, help]) => (
-          <article key={label as string} className={`${styles.metricCard} rounded-lg border border-line bg-white p-5 shadow-panel`}>
+        {metrics.map(({ icon: Icon, label, value, help }) => (
+          <article key={label} className={`${styles.metricCard} rounded-lg border border-line bg-white p-5 shadow-panel`}>
             <div className="mb-4 grid h-10 w-10 place-items-center rounded-lg bg-mist text-teal"><Icon size={20} /></div>
-            <p className="text-sm font-medium text-slate-500">{label as string}</p>
-            <p className="mt-1 text-2xl font-bold">{value as string}</p>
-            <p className="mt-2 text-xs text-slate-500">{help as string}</p>
+            <p className="text-sm font-medium text-slate-500">{label}</p>
+            <p className="mt-1 text-2xl font-bold">{value}</p>
+            <p className="mt-2 text-xs text-slate-500">{help}</p>
           </article>
         ))}
       </section>

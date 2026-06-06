@@ -94,7 +94,7 @@ C:\Data\Solutions\NewWorldComputerCenter.Web\apps\api\dist
 Build the Next.js frontend with the hostname that will be used on the destination computer:
 
 ```powershell
-$env:NEXT_PUBLIC_GRAPHQL_URL="http://newworld.local:4000/graphql"
+$env:NEXT_PUBLIC_GRAPHQL_URL="http://localhost:4000/graphql"
 npm run build -w apps/web
 ```
 
@@ -112,7 +112,7 @@ Run these commands from `C:\Data\Solutions\NewWorldComputerCenter.Web`:
 
 ```powershell
 docker build --target api -t nwcc-api:1.0 .
-docker build --target web --build-arg NEXT_PUBLIC_GRAPHQL_URL=http://newworld.local:4000/graphql -t nwcc-web:1.0 .
+docker build --target web --build-arg NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4000/graphql -t nwcc-web:1.0 .
 docker pull mongo:7
 ```
 
@@ -162,7 +162,7 @@ services:
     image: nwcc-web:1.0
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_GRAPHQL_URL: http://newworld.local:4000/graphql
+      NEXT_PUBLIC_GRAPHQL_URL: http://localhost:4000/graphql
     ports:
       - "3000:3000"
     depends_on:
@@ -217,37 +217,7 @@ docker version
 docker compose version
 ```
 
-### 7. Configure the local hostname
-
-On the destination Windows computer, open Notepad as Administrator and edit:
-
-```text
-C:\Windows\System32\drivers\etc\hosts
-```
-
-Add this line:
-
-```text
-127.0.0.1 newworld.local
-```
-
-This hostname is available only on that computer. Repeat this hosts-file entry on any other computer that needs to use the same hostname.
-
-Clear the Windows DNS cache after changing the hosts file:
-
-```powershell
-ipconfig /flushdns
-```
-
-Verify the hostname:
-
-```powershell
-ping newworld.local
-```
-
-It should resolve to `127.0.0.1`.
-
-### 8. Load the build images
+### 7. Load the build images
 
 Open PowerShell on the destination computer and move to the copied deployment folder:
 
@@ -281,7 +251,7 @@ nwcc-web    1.0
 mongo       7
 ```
 
-### 9. Start the application
+### 8. Start the application
 
 From `C:\NWCC-Deploy`, run:
 
@@ -300,13 +270,13 @@ The `mongo`, `api`, and `web` services should be running.
 Open the application locally:
 
 ```text
-http://newworld.local:3000
+http://localhost:3000
 ```
 
 The GraphQL API is available at:
 
 ```text
-http://newworld.local:4000/graphql
+http://localhost:4000/graphql
 ```
 
 If the application does not open immediately, wait for MongoDB and the API to finish starting, then inspect the logs:
@@ -317,7 +287,7 @@ docker compose logs -f
 
 Press `Ctrl+C` to stop following the logs. This does not stop the containers.
 
-### 10. Stop or restart the application
+### 9. Stop or restart the application
 
 Stop the application without deleting the MongoDB data:
 
@@ -342,7 +312,7 @@ docker compose restart
 
 MongoDB data is stored in the `mongo-data` Docker volume and remains available when the containers are stopped or recreated. Do not run `docker compose down -v` unless the database should be deleted.
 
-### 11. Deploy a newer build
+### 10. Deploy a newer build
 
 On the build computer, rebuild both Docker images and recreate `nwcc-images.tar` using steps 2 through 4.
 
@@ -365,7 +335,7 @@ The existing MongoDB volume is reused, so application data is retained.
 
 ### Local access limitation
 
-`newworld.local` points to `127.0.0.1`, so the application is accessible only from the destination computer itself. Other computers cannot use this address to access the application.
+`localhost` points to the destination computer itself, so these URLs are accessible only from that computer. Other computers cannot use `localhost` to access this application.
 
 ## Notes
 
