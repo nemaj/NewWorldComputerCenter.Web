@@ -1,0 +1,38 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build:
+      context: .
+      target: api
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/internet_subscriptions
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:4000/graphql}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:4000/graphql}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:
