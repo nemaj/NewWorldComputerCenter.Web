@@ -44,9 +44,71 @@ The web dashboard runs at `http://localhost:3000`.
 
 This method transfers Docker images instead of copying the complete project. The destination computer does not need Node.js, npm, or the source code. It only needs Docker Desktop.
 
-### 1. Build the application images
+### Deployment overview
 
-Run these commands from the project directory on the build computer:
+The deployment has two computers:
+
+- Build computer: contains the complete project and creates the deployment package.
+- Destination computer: receives only the deployment package and runs it with Docker.
+
+The final folder copied to the destination computer will contain:
+
+```text
+NWCC-Deploy/
+  docker-compose.yml
+  nwcc-images.tar
+```
+
+Do not copy only `apps\api\dist` and `apps\web\.next`. Those directories do not contain all Node.js runtime dependencies. The Docker archive `nwcc-images.tar` is the complete build package.
+
+### 1. Prepare the build computer
+
+Install and start Docker Desktop. Docker Desktop must be configured to use Linux containers.
+
+Open PowerShell and move to the project directory:
+
+```powershell
+Set-Location "C:\Data\Solutions\NewWorldComputerCenter.Web"
+```
+
+Install the exact dependencies from `package-lock.json`:
+
+```powershell
+npm ci
+```
+
+### 2. Build and verify the API and frontend
+
+Build the NestJS API:
+
+```powershell
+npm run build -w apps/api
+```
+
+The API build output is created at:
+
+```text
+C:\Data\Solutions\NewWorldComputerCenter.Web\apps\api\dist
+```
+
+Build the Next.js frontend with the hostname that will be used on the destination computer:
+
+```powershell
+$env:NEXT_PUBLIC_GRAPHQL_URL="http://newworld.local:4000/graphql"
+npm run build -w apps/web
+```
+
+The frontend build output is created at:
+
+```text
+C:\Data\Solutions\NewWorldComputerCenter.Web\apps\web\.next
+```
+
+These commands verify that both applications compile successfully. The next step packages them with their runtime dependencies into Docker images.
+
+### 3. Build the Docker images
+
+Run these commands from `C:\Data\Solutions\NewWorldComputerCenter.Web`:
 
 ```powershell
 docker build --target api -t nwcc-api:1.0 .
@@ -56,16 +118,24 @@ docker pull mongo:7
 
 `NEXT_PUBLIC_GRAPHQL_URL` is supplied while building because public Next.js environment variables are included in the frontend build.
 
-### 2. Export the images
+Confirm that all three images exist:
+
+```powershell
+docker image ls nwcc-api
+docker image ls nwcc-web
+docker image ls mongo
+```
+
+### 4. Create the deployment folder
 
 Create a deployment directory and save all required images into one archive:
 
 ```powershell
-New-Item -ItemType Directory -Force deploy
-docker save -o deploy\nwcc-images.tar nwcc-api:1.0 nwcc-web:1.0 mongo:7
+New-Item -ItemType Directory -Force "C:\NWCC-Deploy"
+docker save -o "C:\NWCC-Deploy\nwcc-images.tar" nwcc-api:1.0 nwcc-web:1.0 mongo:7
 ```
 
-Create `deploy\docker-compose.yml` with the following content:
+Create `C:\NWCC-Deploy\docker-compose.yml` with the following content:
 
 ```yaml
 services:
@@ -102,15 +172,52 @@ volumes:
   mongo-data:
 ```
 
-Copy only these files to the destination computer:
+The completed deployment folder should be:
 
 ```text
-deploy/
+C:\NWCC-Deploy\
   docker-compose.yml
   nwcc-images.tar
 ```
 
-### 3. Configure the local hostname
+The `.tar` file can be several hundred megabytes because it contains the frontend, API, Node.js runtime, dependencies, and MongoDB image.
+
+### 5. Copy the deployment folder
+
+Copy the complete `C:\NWCC-Deploy` folder to a USB drive, shared drive, or other removable storage.
+
+For example, if the USB drive is `E:`, run:
+
+```powershell
+Copy-Item -Path "C:\NWCC-Deploy" -Destination "E:\" -Recurse
+```
+
+On the destination computer, copy that folder to:
+
+```text
+C:\NWCC-Deploy
+```
+
+For example, with the USB drive still mounted as `E:`:
+
+```powershell
+Copy-Item -Path "E:\NWCC-Deploy" -Destination "C:\" -Recurse
+```
+
+The destination path can be different, but all Docker commands must be run from the directory containing `docker-compose.yml`.
+
+### 6. Prepare the destination computer
+
+Install and start Docker Desktop on the destination computer. Node.js, npm, and the project source code are not required.
+
+Confirm that Docker is running:
+
+```powershell
+docker version
+docker compose version
+```
+
+### 7. Configure the local hostname
 
 On the destination Windows computer, open Notepad as Administrator and edit:
 
@@ -126,14 +233,69 @@ Add this line:
 
 This hostname is available only on that computer. Repeat this hosts-file entry on any other computer that needs to use the same hostname.
 
-### 4. Load and run the application
+Clear the Windows DNS cache after changing the hosts file:
 
-Open PowerShell in the copied `deploy` directory:
+```powershell
+ipconfig /flushdns
+```
+
+Verify the hostname:
+
+```powershell
+ping newworld.local
+```
+
+It should resolve to `127.0.0.1`.
+
+### 8. Load the build images
+
+Open PowerShell on the destination computer and move to the copied deployment folder:
+
+```powershell
+Set-Location "C:\NWCC-Deploy"
+```
+
+Confirm that both files are present:
+
+```powershell
+Get-ChildItem
+```
+
+Load the frontend, API, and MongoDB images:
 
 ```powershell
 docker load -i .\nwcc-images.tar
+```
+
+This command can take several minutes. Confirm that the images were loaded:
+
+```powershell
+docker image ls
+```
+
+The list should include:
+
+```text
+nwcc-api    1.0
+nwcc-web    1.0
+mongo       7
+```
+
+### 9. Start the application
+
+From `C:\NWCC-Deploy`, run:
+
+```powershell
 docker compose up -d
 ```
+
+Check the container status:
+
+```powershell
+docker compose ps
+```
+
+The `mongo`, `api`, and `web` services should be running.
 
 Open the application locally:
 
@@ -147,33 +309,63 @@ The GraphQL API is available at:
 http://newworld.local:4000/graphql
 ```
 
-Check the running containers:
-
-```powershell
-docker compose ps
-```
-
-View service logs if the application does not start:
+If the application does not open immediately, wait for MongoDB and the API to finish starting, then inspect the logs:
 
 ```powershell
 docker compose logs -f
 ```
 
+Press `Ctrl+C` to stop following the logs. This does not stop the containers.
+
+### 10. Stop or restart the application
+
 Stop the application without deleting the MongoDB data:
 
 ```powershell
+Set-Location "C:\NWCC-Deploy"
 docker compose down
 ```
 
-To deploy a new version, rebuild and export the images on the build computer, replace `nwcc-images.tar` on the destination computer, and run:
+Start it again:
 
 ```powershell
+Set-Location "C:\NWCC-Deploy"
+docker compose up -d
+```
+
+Restart all services:
+
+```powershell
+Set-Location "C:\NWCC-Deploy"
+docker compose restart
+```
+
+MongoDB data is stored in the `mongo-data` Docker volume and remains available when the containers are stopped or recreated. Do not run `docker compose down -v` unless the database should be deleted.
+
+### 11. Deploy a newer build
+
+On the build computer, rebuild both Docker images and recreate `nwcc-images.tar` using steps 2 through 4.
+
+Replace this file on the destination computer:
+
+```text
+C:\NWCC-Deploy\nwcc-images.tar
+```
+
+Then run on the destination computer:
+
+```powershell
+Set-Location "C:\NWCC-Deploy"
 docker compose down
 docker load -i .\nwcc-images.tar
 docker compose up -d --force-recreate
 ```
 
-MongoDB data is stored in the `mongo-data` Docker volume and remains available when the containers are recreated.
+The existing MongoDB volume is reused, so application data is retained.
+
+### Local access limitation
+
+`newworld.local` points to `127.0.0.1`, so the application is accessible only from the destination computer itself. Other computers cannot use this address to access the application.
 
 ## Notes
 
